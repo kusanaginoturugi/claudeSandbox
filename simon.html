@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>サイモンゲーム</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+ 
+        body {
+            background: #0f0f1e;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            color: #fff;
+            user-select: none;
+        }
+ 
+        h1 {
+            font-size: 3rem;
+            font-weight: 900;
+            letter-spacing: 0.4em;
+            margin-bottom: 30px;
+            color: #fff;
+            text-shadow:
+                0 0 10px rgba(255,255,255,0.4),
+                0 0 30px rgba(150,150,255,0.3);
+        }
+ 
+        /* ─── ゲームボード ─── */
+        .board-wrap {
+            position: relative;
+            width: 380px;
+            height: 380px;
+        }
+ 
+        .game-board {
+            width: 380px;
+            height: 380px;
+            border-radius: 50%;
+            position: relative;
+            background: #111;
+            overflow: hidden;
+            box-shadow:
+                0 0 0 6px #222,
+                0 10px 60px rgba(0,0,0,0.9);
+        }
+ 
+        /* 4つのクローバー花びらボタン */
+        .btn {
+            position: absolute;
+            width: calc(50% - 7px);
+            height: calc(50% - 7px);
+            border: none;
+            cursor: pointer;
+            outline: none;
+            opacity: 0.35;
+            transition: opacity 0.08s, filter 0.08s;
+        }
+ 
+        .btn:hover { opacity: 0.55; }
+ 
+        .btn.active {
+            opacity: 1;
+        }
+ 
+        .btn-green  { background: #00e676; top:7px;    left:7px;    border-radius: 100% 0 0 0; }
+        .btn-red    { background: #ff1744; top:7px;    right:7px;   border-radius: 0 100% 0 0; }
+        .btn-yellow { background: #ffd740; bottom:7px; left:7px;    border-radius: 0 0 0 100%; }
+        .btn-blue   { background: #2979ff; bottom:7px; right:7px;   border-radius: 0 0 100% 0; }
+ 
+        .btn-green.active  { filter: drop-shadow(0 0 18px #00e676) brightness(1.6); }
+        .btn-red.active    { filter: drop-shadow(0 0 18px #ff1744) brightness(1.6); }
+        .btn-yellow.active { filter: drop-shadow(0 0 18px #ffd740) brightness(1.6); }
+        .btn-blue.active   { filter: drop-shadow(0 0 18px #2979ff) brightness(1.6); }
+ 
+        /* 中央パネル */
+        .center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 130px;
+            height: 130px;
+            background: #0f0f1e;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 20;
+            box-shadow: 0 0 0 4px #222, 0 4px 20px rgba(0,0,0,0.8);
+            pointer-events: none;
+        }
+ 
+        #scoreDisplay {
+            font-size: 2.4rem;
+            font-weight: 900;
+            line-height: 1;
+            color: #fff;
+        }
+ 
+        #statusText {
+            font-size: 0.65rem;
+            color: #aaa;
+            letter-spacing: 0.05em;
+            margin-top: 4px;
+            text-align: center;
+            padding: 0 6px;
+        }
+ 
+        /* ─── スタートボタン ─── */
+        #startBtn {
+            margin-top: 30px;
+            padding: 14px 48px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            letter-spacing: 0.15em;
+            color: #fff;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border: none;
+            border-radius: 40px;
+            cursor: pointer;
+            box-shadow: 0 6px 24px rgba(102,126,234,0.5);
+            transition: transform 0.15s, box-shadow 0.15s;
+        }
+ 
+        #startBtn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(102,126,234,0.7);
+        }
+ 
+        #startBtn:active { transform: translateY(0); }
+ 
+        /* ─── メッセージ ─── */
+        #message {
+            margin-top: 18px;
+            font-size: 1.15rem;
+            height: 34px;
+            letter-spacing: 0.05em;
+            transition: color 0.3s;
+        }
+ 
+        #message.gameover {
+            color: #ff5252;
+            animation: shake 0.4s ease;
+        }
+ 
+        #message.player-turn { color: #69f0ae; }
+ 
+        @keyframes shake {
+            0%,100% { transform: translateX(0); }
+            20%      { transform: translateX(-8px); }
+            60%      { transform: translateX(8px); }
+        }
+ 
+        #highScore {
+            margin-top: 10px;
+            font-size: 0.85rem;
+            color: #555;
+        }
+ 
+        /* ─── ラベル ─── */
+        .label {
+            position: absolute;
+            font-size: 0.6rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            opacity: 0.7;
+            pointer-events: none;
+            z-index: 5;
+        }
+        .label-green  { top: 30px;  left: 30px;  color: #00e676; }
+        .label-red    { top: 30px;  right: 30px; color: #ff1744; }
+        .label-yellow { bottom: 30px; left: 30px;  color: #ffd740; }
+        .label-blue   { bottom: 30px; right: 30px; color: #2979ff; }
+    </style>
+</head>
+<body>
+ 
+<h1>SIMON</h1>
+ 
+<div class="board-wrap">
+    <div class="game-board" id="gameBoard">
+        <button class="btn btn-green"  id="btn-green"  onclick="playerPress('green')"></button>
+        <button class="btn btn-red"    id="btn-red"    onclick="playerPress('red')"></button>
+        <button class="btn btn-yellow" id="btn-yellow" onclick="playerPress('yellow')"></button>
+        <button class="btn btn-blue"   id="btn-blue"   onclick="playerPress('blue')"></button>
+    </div>
+    <div class="center">
+        <div id="scoreDisplay">0</div>
+        <div id="statusText">スタートを<br>押してね</div>
+    </div>
+</div>
+ 
+<button id="startBtn" onclick="startGame()">スタート</button>
+<div id="message"></div>
+<div id="highScore">ハイスコア: 0</div>
+ 
+<script>
+    // ─── Web Audio ───────────────────────────────────────────────
+    let audioCtx = null;
+ 
+    function ctx() {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        return audioCtx;
+    }
+ 
+    // 各ボタンの周波数（サイモン公式に近い音程）
+    const FREQ = { green: 415, red: 310, yellow: 252, blue: 209 };
+ 
+    function playTone(color, ms = 350) {
+        const ac = ctx();
+        const osc = ac.createOscillator();
+        const gain = ac.createGain();
+        osc.connect(gain);
+        gain.connect(ac.destination);
+        osc.type = 'sine';
+        osc.frequency.value = FREQ[color];
+        const t = ac.currentTime;
+        gain.gain.setValueAtTime(0, t);
+        gain.gain.linearRampToValueAtTime(0.45, t + 0.01);
+        gain.gain.setValueAtTime(0.45, t + ms / 1000 - 0.04);
+        gain.gain.linearRampToValueAtTime(0, t + ms / 1000);
+        osc.start(t);
+        osc.stop(t + ms / 1000);
+    }
+ 
+    function playGameOver() {
+        const ac = ctx();
+        // 下降する不協和音を4音
+        const notes = [
+            { f: 330, t: 0.0 },
+            { f: 280, t: 0.28 },
+            { f: 220, t: 0.56 },
+            { f: 165, t: 0.84 },
+        ];
+        notes.forEach(({ f, t }) => {
+            const osc = ac.createOscillator();
+            const gain = ac.createGain();
+            osc.connect(gain);
+            gain.connect(ac.destination);
+            osc.type = 'sawtooth';
+            osc.frequency.value = f;
+            const now = ac.currentTime;
+            gain.gain.setValueAtTime(0, now + t);
+            gain.gain.linearRampToValueAtTime(0.35, now + t + 0.04);
+            gain.gain.linearRampToValueAtTime(0, now + t + 0.24);
+            osc.start(now + t);
+            osc.stop(now + t + 0.26);
+        });
+    }
+ 
+    // ─── ゲーム状態 ──────────────────────────────────────────────
+    const COLORS = ['green', 'red', 'yellow', 'blue'];
+    let sequence = [];
+    let playerIdx = 0;
+    let isPlayerTurn = false;
+    let busy = false;
+    let gameActive = false;
+    let highScore = 0;
+ 
+    // ─── ユーティリティ ──────────────────────────────────────────
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
+ 
+    function setButtons(enabled) {
+        COLORS.forEach(c => {
+            document.getElementById(`btn-${c}`).style.pointerEvents = enabled ? 'auto' : 'none';
+        });
+    }
+ 
+    function setStatus(text) { document.getElementById('statusText').innerHTML = text; }
+    function setScore(n)  { document.getElementById('scoreDisplay').textContent = n; }
+ 
+    function setMessage(text, cls = '') {
+        const el = document.getElementById('message');
+        el.className = cls;
+        el.textContent = text;
+    }
+ 
+    // ボタンを一瞬光らせる
+    function flash(color, ms) {
+        return new Promise(resolve => {
+            const btn = document.getElementById(`btn-${color}`);
+            btn.classList.add('active');
+            playTone(color, ms);
+            setTimeout(() => { btn.classList.remove('active'); resolve(); }, ms);
+        });
+    }
+ 
+    // ─── シーケンス再生 ──────────────────────────────────────────
+    async function playSequence() {
+        busy = true;
+        isPlayerTurn = false;
+        setButtons(false);
+        setMessage('');
+        setStatus('見てて！');
+ 
+        await sleep(700);
+ 
+        for (const color of sequence) {
+            await flash(color, 400);
+            await sleep(180);
+        }
+ 
+        await sleep(400);
+ 
+        busy = false;
+        isPlayerTurn = true;
+        playerIdx = 0;
+        setButtons(true);
+        setStatus('あなたの番！');
+        setMessage('ボタンを押してね', 'player-turn');
+    }
+ 
+    // ─── プレイヤー入力 ──────────────────────────────────────────
+    async function playerPress(color) {
+        if (!isPlayerTurn || busy || !gameActive) return;
+ 
+        isPlayerTurn = false; // 多重入力防止
+        await flash(color, 200);
+ 
+        if (color !== sequence[playerIdx]) {
+            await doGameOver();
+            return;
+        }
+ 
+        playerIdx++;
+ 
+        if (playerIdx < sequence.length) {
+            // まだ入力途中
+            isPlayerTurn = true;
+            return;
+        }
+ 
+        // シーケンス完了！
+        const score = sequence.length;
+        setScore(score);
+        if (score > highScore) {
+            highScore = score;
+            document.getElementById('highScore').textContent = `ハイスコア: ${highScore}`;
+        }
+ 
+        setMessage('');
+        setStatus('正解！');
+        await sleep(700);
+ 
+        sequence.push(COLORS[Math.floor(Math.random() * 4)]);
+        await playSequence();
+    }
+ 
+    // ─── ゲームオーバー ──────────────────────────────────────────
+    async function doGameOver() {
+        gameActive = false;
+        isPlayerTurn = false;
+        setButtons(false);
+ 
+        // 全ボタンを3回点滅
+        for (let i = 0; i < 3; i++) {
+            COLORS.forEach(c => document.getElementById(`btn-${c}`).classList.add('active'));
+            await sleep(140);
+            COLORS.forEach(c => document.getElementById(`btn-${c}`).classList.remove('active'));
+            await sleep(140);
+        }
+ 
+        playGameOver();
+        setMessage('ゲームオーバー！', 'gameover');
+        setStatus('もう一度？');
+ 
+        const btn = document.getElementById('startBtn');
+        btn.textContent = 'もう一度';
+        btn.style.display = 'inline-block';
+    }
+ 
+    // ─── ゲーム開始 ──────────────────────────────────────────────
+    async function startGame() {
+        ctx(); // AudioContext をユーザー操作で初期化
+        document.getElementById('startBtn').style.display = 'none';
+ 
+        sequence = [];
+        playerIdx = 0;
+        isPlayerTurn = false;
+        busy = false;
+        gameActive = true;
+ 
+        setScore(0);
+        setMessage('');
+        document.getElementById('message').className = '';
+ 
+        sequence.push(COLORS[Math.floor(Math.random() * 4)]);
+        await playSequence();
+    }
+</script>
+</body>
+</html>
