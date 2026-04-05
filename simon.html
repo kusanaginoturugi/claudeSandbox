@@ -187,16 +187,16 @@
     <div class="game-board" id="gameBoard">
         <button class="btn btn-green"  id="btn-green"
             onmousedown="playerDown('green')"  onmouseup="playerUp('green')"  onmouseleave="playerUp('green')"
-            ontouchstart="e=>{e.preventDefault();playerDown('green')}"  ontouchend="playerUp('green')"></button>
+            ontouchstart="event.preventDefault();playerDown('green')"  ontouchend="playerUp('green')"></button>
         <button class="btn btn-red"    id="btn-red"
             onmousedown="playerDown('red')"    onmouseup="playerUp('red')"    onmouseleave="playerUp('red')"
-            ontouchstart="e=>{e.preventDefault();playerDown('red')}"    ontouchend="playerUp('red')"></button>
+            ontouchstart="event.preventDefault();playerDown('red')"    ontouchend="playerUp('red')"></button>
         <button class="btn btn-yellow" id="btn-yellow"
             onmousedown="playerDown('yellow')" onmouseup="playerUp('yellow')" onmouseleave="playerUp('yellow')"
-            ontouchstart="e=>{e.preventDefault();playerDown('yellow')}" ontouchend="playerUp('yellow')"></button>
+            ontouchstart="event.preventDefault();playerDown('yellow')" ontouchend="playerUp('yellow')"></button>
         <button class="btn btn-blue"   id="btn-blue"
             onmousedown="playerDown('blue')"   onmouseup="playerUp('blue')"   onmouseleave="playerUp('blue')"
-            ontouchstart="e=>{e.preventDefault();playerDown('blue')}"   ontouchend="playerUp('blue')"></button>
+            ontouchstart="event.preventDefault();playerDown('blue')"   ontouchend="playerUp('blue')"></button>
     </div>
     <div class="center">
         <div id="scoreDisplay">0</div>
